@@ -1,0 +1,14 @@
+[project]
+name = "evoexploration"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "evogym>=2.0.0",
+    "glfw>=2.8.0",
+    "pyopengl>=3.1.7",
+    "pyopengl-accelerate>=3.1.7",
+    "ttkbootstrap>=1.10.1",
+    "setuptools>=75.6.0",
+]
