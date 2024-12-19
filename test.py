@@ -1,60 +1,44 @@
-from evogym import EvoWorld, EvoSim, EvoViewer, sample_robot
+from evogym import sample_robot
 import gymnasium as gym
 import evogym.envs
-from evogym import sample_robot
 import genAlg as ga
 import numpy as np 
 import os
-
+import time
+from multiprocessing import Pool
+from Bot import Bot
 
 def generateBots(N = 10):
     bodies = []
     connectomes = []
     scores = []
+    body, connections = sample_robot((5,5))
     for _ in range(N):
-        body, connections = sample_robot((5,5))
+        print(connections)
         bodies.append(body)
         connectomes.append(connections)
         scores.append(0)
     
     return bodies,connectomes,scores
 
+def run_sim(body):
+    B = Bot(body)
+    B.run()
+    return (body,B.reward)
+
+
 if __name__ == '__main__':
 
     bodies, connectomes, scores = generateBots(4)
 
     while True:
-        for n,body in enumerate(bodies):
+        scores = []
+        with Pool(len(bodies)) as p:
+            results = p.map(run_sim,bodies)
 
-            print(body,connectomes[n])
-            world = EvoWorld.from_json(os.path.join('exported', 'my_evironment.json'))
-            world.add_from_array(
-                name='robot',
-                structure=body,
-                x=0,
-                y=10,
-                connections=connectomes[n]
-            )
-
-            sim = EvoSim(world)
-            sim.reset()
-
-            viewer = EvoViewer(sim)
-            viewer.track_objects('robot')
-
-            for i in range(500):
-                sim.set_action(
-                    'robot',
-                    np.random.uniform(
-                        low = 0.6,
-                        high = 1.6,
-                        size=(sim.get_dim_action_space('robot'),)
-                    )
-                )
-                sim.step()
-                viewer.render('screen')
-            viewer.close()
-        print("evolution")
-
+            bodies = []
+            for body, score in results:
+                bodies.append(body)
+                scores.append(score)
+        print(scores)
         bodies = ga.mixAndMutate(bodies,scores)
-        connections = ga.mixAndMutate(connectomes,scores)

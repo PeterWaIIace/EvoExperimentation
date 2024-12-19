@@ -81,12 +81,14 @@ def mutate(genome,NoM):
     genome_cp = genome.copy()
     genome = genome.copy()
 
+    min_value = 0
+    max_value = 4
     while(genome_cp == genome).all():
         randArray = np.random.randint(0,10,size=genome.shape)
         mask = randArray > HALF
-        evolutionDrift = np.random.randint(-2**16,2**16,size=genome.shape)
+        evolutionDrift = np.random.randint(-2,2,size=genome.shape)
         genome[mask] += evolutionDrift[mask]
-
+        genome[(genome < min_value) | (genome > max_value)] = 0
 
     return genome
 
@@ -127,6 +129,7 @@ def mixAndMutate(genomes,scores,mr=0.5,ms=2,maxPopulation=50,genomePurifying=Fal
 
     offspring = generateOffspring(superior[0],superior[1],len(genomes))
     newGeneration = __mutateMany(offspring,ms,rate=mr)
+    # newGeneration = offspring 
 
     random.shuffle(newGeneration)
     newGeneration = newGeneration[:maxPopulation-1] + [superior[0]]
