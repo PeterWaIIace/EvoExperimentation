@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-HALF = 5
+HALF = 8
 
 def mixAdjacent(genomes,scores):
     genomes = sorted(zip(scores,genomes))
@@ -88,7 +88,7 @@ def mutate(genome,NoM):
         mask = randArray > HALF
         evolutionDrift = np.random.randint(-2,2,size=genome.shape)
         genome[mask] += evolutionDrift[mask]
-        genome[(genome < min_value) | (genome > max_value)] = 0
+        genome[(genome < min_value) | (genome > max_value)] %= max_value
 
     return genome
 
@@ -123,6 +123,7 @@ def mixAndMutate(genomes,scores,mr=0.5,ms=2,maxPopulation=50,genomePurifying=Fal
     assert(isinstance(genomes[0],np.ndarray))
 
     superior, rest= separateSuperior(genomes,scores)
+    copy_sup = superior.copy()
 
     # ## TO DO: add at least one superior gen
     # offspring = mateSuperior(superior)
@@ -132,7 +133,7 @@ def mixAndMutate(genomes,scores,mr=0.5,ms=2,maxPopulation=50,genomePurifying=Fal
     # newGeneration = offspring 
 
     random.shuffle(newGeneration)
-    newGeneration = newGeneration[:maxPopulation-1] + [superior[0]]
+    newGeneration = newGeneration[:maxPopulation-1] + [copy_sup[0]]
     # newGeneration = newGeneration[:maxPopulation-2] + superior
     # newGeneration = newGeneration[:]
 

@@ -26,10 +26,9 @@ def run_sim(body):
     B.run()
     return (body,B.reward)
 
-
 if __name__ == '__main__':
 
-    bodies, connectomes, scores = generateBots(4)
+    bodies, connectomes, scores = generateBots(20)
 
     while True:
         scores = []
