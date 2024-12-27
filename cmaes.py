@@ -1,14 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def flatten(x):
+    flat_x_i = []
+    shapes = []
+    for x_i in x:
+        shapes.append(np.array(x_i).shape)
+        flat_x_i.append(np.array(x_i).flatten())
+        
+    flat_x = np.concatenate(flat_x_i)
+    return flat_x, shapes
+    
+def unflatten(flat_x, shapes):
+    x = []
+    offset = 0
+    for shape in shapes:
+        lenght = 1
+        for n in shape:
+            lenght *= n
+        x.append(flat_x[offset:offset+lenght].reshape(shape))
+        offset += lenght
+    return x
+
 class CMA_ES:
     def __init__(self, mean, sigma, population_size, fitness_function):
-        self.mean = np.array(mean)
+        flat_mean, shapes = flatten(mean)
+        self.shapes = shapes
+        self.mean = np.array(flat_mean)
         self.sigma = sigma
         self.population_size = population_size
         self.fitness_function = fitness_function
 
-        self.dimension = len(mean)
+        self.dimension = len(flat_mean)
         self.cov_matrix = np.identity(self.dimension)
         self.weights = np.log(self.population_size / 2 + 0.5) - np.log(np.arange(1, self.population_size + 1))
         self.weights /= np.sum(self.weights)
@@ -25,13 +48,19 @@ class CMA_ES:
         self.history = []  # To store mean for visualization
 
     def ask(self):
-        return [
-            self.mean + self.sigma * np.random.multivariate_normal(np.zeros(self.dimension), self.cov_matrix)
+        solutions = [
+            unflatten(
+                self.mean + self.sigma * np.random.multivariate_normal(np.zeros(self.dimension), self.cov_matrix),
+                self.shapes
+            )
             for _ in range(self.population_size)
         ]
+        return solutions
+
 
     def tell(self, solutions):
-        solutions.sort(key=lambda s: self.fitness_function(s), reverse=False)
+        solutions= [flatten(solution)[0] for solution in solutions]
+        solutions.sort(key=lambda s: self.fitness_function(unflatten(s,self.shapes)), reverse=False)
 
         samples = np.array([s for s in solutions])
         new_mean = np.sum(self.weights[:, None] * samples[:len(self.weights)], axis=0)
@@ -67,16 +96,16 @@ class CMA_ES:
         self.mean = new_mean
 
         # Save the mean for visualization
-        self.history.append(self.mean.copy())
+        self.history.append(self.mean)
 
 
 # Example usage:
 def fitness_function(x):
-    return np.sum(x**2)
+    return np.sum(x[0]**2)
 
 
 if __name__=="__main__":
-  mean = [0, 0, 0, 0, 0, 0]
+  mean = [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0]]
   sigma = 0.3
   population_size = 10
   cma_es = CMA_ES(mean, sigma, population_size, fitness_function)
@@ -84,4 +113,4 @@ if __name__=="__main__":
   for generation in range(100):
       solutions = cma_es.ask()
       cma_es.tell(solutions)
-      print(f"Generation {generation}: Solutions: {solutions} Best fitness = {fitness_function(cma_es.mean)}")
+      print(f"Generation {generation}: Best fitness = {fitness_function(cma_es.mean)}")
